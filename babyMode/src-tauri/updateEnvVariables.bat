@@ -1,6 +1,6 @@
 
 @echo off
-echo "updateEnvVars" script tries to update Enviroment Variables without closing and reopening CMD.
+:: "updateEnvVars" script tries to update Enviroment Variables without closing and reopening CMD.
 :: based on https://github.com/chocolatey/choco/blob/master/src/chocolatey.resources/redirects/RefreshEnv.cmd
 :: Code generously provided by @beatcracker: https://github.com/beatcracker/detect-batch-subshell
 

@@ -1,6 +1,58 @@
 var invoke = window.__TAURI__.invoke;
 var dialog = window.__TAURI__.dialog;
 
+
+const dialogPrompt = {
+  el: document.getElementById("dialog"),
+  hintEl: document.getElementById("hint"),
+  inputEl: document.getElementById("input"),
+  branchEl: document.getElementById("inputBranch"),
+  folderEl: document.getElementById("inputFolder"),
+  blackOverlayEl: document.getElementById("blackOverlay"),
+  defaultInput: {},
+  outputFn: null,
+
+  show: function (hint, def, curr, outputFn) {
+    this.hintEl.innerHTML = hint;
+    this.inputEl.value = curr.url;
+    this.branchEl.value = curr.branch;
+    this.folderEl.value = curr.folder;
+    this.defaultInput = { ...def };
+    this.outputFn = outputFn;
+    
+    this.el.style.display = "block";
+    this.blackOverlayEl.style.display = "block";
+  },
+
+  ok: function () {
+    this.el.style.display = "none";
+    
+    var output = {
+      url: this.inputEl.value,
+      branch: this.branchEl.value,
+      folder: this.folderEl.value
+    };
+    
+    this.blackOverlayEl.style.display = "none";
+    
+    if (typeof this.outputFn === "function") {
+      this.outputFn(output);
+    }
+  },
+
+  cancel: function () {
+    this.el.style.display = "none";
+    this.blackOverlayEl.style.display = "none";
+  },
+
+  reset: function () {
+    this.inputEl.value = this.defaultInput.url;
+    this.branchEl.value = this.defaultInput.branch;
+    this.folderEl.value = this.defaultInput.folder;
+  }
+};
+
+
 function callRust() {
   invoke('call_rust', { jsMsg: 'Hello from JS' })
     .then(function (rustMsg) {
@@ -17,7 +69,7 @@ function counter(countVal) {
 }
 
 // File selection dialog
-function fileselect(isDirMode, defaultp) {
+function fileselect(folderEl,isDirMode, defaultp) {
   var properties = {
     defaultPath: defaultp,
     directory: isDirMode,
@@ -28,7 +80,7 @@ function fileselect(isDirMode, defaultp) {
   };
   dialog.open(properties).then(function (pathStr) {
     if (!pathStr) pathStr = defaultp;
-    document.getElementById('folderInput').value = pathStr;
+    folderEl.value = pathStr;
     var element = document.getElementById('blackOverlay').style.display = 'none';
   });
 }
@@ -135,34 +187,34 @@ const settingsData = {
         inputType: "separator"
       },
       {
-        label: "Download Liblcf Repository ( 4mb+ )",
+        label: "Download buildScripts Repository ( 4mb+ )",
         inputType: "checkbox",
-        inputId: "liblcfRepo",
+        inputId: "buildScriptsRepo",
         checked: true
       },
       {
-         label: "Liblcf Task:",
+         label: "BuildScripts Task:",
         inputType: "checkbox+select",
-        inputId: "toolchainTask",
+        inputId: "liblcfTask",
         checked: true,
         options: [
           {
             value: "download_prebuilt.cmd",
-            text: "Download prebuilt Toolchain ( 400mb+ )"
+            text: "Download prebuilt liblcf ( 400mb+ )"
           },
           {
             value: "build.cmd",
-            text: "Build Toolchain from scratch (30 minutes process)"
+            text: "Build liblcf from scratch (30 minutes process)"
           }
         ]
       },
-      {
-        label: "Update Environment Variables",
-        inputType: "checkbox",
-        inputId: "updateEnvVariables",
-        checked: true,
-        output: "setup_env.cmd"
-      }
+      // {
+      //   label: "Update Environment Variables",
+      //   inputType: "checkbox",
+      //   inputId: "updateEnvVariables",
+      //   checked: true,
+      //   output: "setup_env.cmd"
+      // }
     ]
   },
   4: {
@@ -173,17 +225,34 @@ const settingsData = {
         inputType: "checkbox",
         inputId: "runIt",
         checked: true
+      },
+      {
+        label: "Play Games From:",
+        inputType: "text",
+        inputId: "gamesInput",
+        inputPlaceholder: "C:\\EasyRPG",
+        readonly: true
       }
     ]
   }
 };
 
+var repos = {
+  libDefault:  {},
+  playerDefault: {},
+  lib:{url:"https://github.com/EasyRPG/buildscripts.git",branch:"master",folder:"buildScripts"},
+  player:{url:"https://github.com/EasyRPG/Player.git", branch:"master",folder:"Player"}
+ };
+
+ repos.libDefault = repos.lib;
+ repos.playerDefault = repos.player;
+
 let fileInput;
-function openFolderDialog() {
+function openFolderDialog(output) {
   var element = document.getElementById('blackOverlay').style.display = 'block';
   const isFolder = true;
-  const startFolder = document.getElementById("folderInput").value ? document.getElementById("folderInput").value : document.getElementById("folderInput").placeholder;
-  fileselect(isFolder, startFolder);
+  const startFolder = output.value ? output.value : output.placeholder;
+  fileselect(output, isFolder, startFolder);
 }
 
 // Function to dynamically create settings based on the JSON data
@@ -215,10 +284,10 @@ function createSettings() {
         input.setAttribute("placeholder", item.inputPlaceholder);
         input.disabled = item.readonly || false;
 
-        if (item.inputId === "folderInput") {
+        if (item.inputId === "folderInput" || item.inputId === "gamesInput" ) {
           const selectButton = document.createElement("button");
           selectButton.textContent = "Select Folder";
-          selectButton.onclick = openFolderDialog; // Assuming you have the openFolderDialog() function defined elsewhere
+          selectButton.onclick = function(){;openFolderDialog(selectButton.previousSibling)};
           fieldset.appendChild(label);
           fieldset.appendChild(input);
           fieldset.appendChild(selectButton);
@@ -286,6 +355,30 @@ function createSettings() {
     settingsContainer.appendChild(fieldset);
     settingsContainer.appendChild(document.createElement("br"));
   });
+
+  repos.player = repos.playerDefault
+  repos.lib = repos.libDefault
+  document.getElementById("gamesInput").nextSibling.style.display =
+  document.getElementById("gamesInput").previousSibling.style.display =
+  document.getElementById("gamesInput").style.display = "none";
+
+  playerRepo.nextSibling.innerHTML  =   playerRepo.nextSibling.innerHTML  + " <button id='PlayerPath'> ... </button>"
+  buildScriptsRepo.nextSibling.innerHTML  =   buildScriptsRepo.nextSibling.innerHTML  + " <button id='libPath'> ... </button>"
+
+  document.getElementById("PlayerPath").addEventListener("click", function() {
+    dialogPrompt.show("Player's Repository", repos.playerDefault, repos.player, function(value) {
+      repos.player =  value;
+    });
+  });
+
+  document.getElementById("libPath").addEventListener("click", function() {
+    dialogPrompt.show("BuildScripts's Repository", repos.libDefault,repos.lib, function(value) {
+      repos.lib =  value;
+    });
+
+    
+  });
+
 }
 
 // Call the function to create the settings on page load
@@ -303,21 +396,21 @@ function getInputValues() {
       "winget install": [],
     "git clone": []
   },
-    "toolchainTasks":[],
+    "liblcfTasks":[],
     "postInstall": {
-      "openProject": document.getElementById("runIt").checked
+      "openProject": document.getElementById("runIt").checked,
+      "gamesFolder": document.getElementById("gamesInput").value ? document.getElementById("gamesInput").value : document.getElementById("gamesInput").placeholder,
     }
   };
 
-  if (document.getElementById("toolchainTask").checked) output.toolchainTasks.push(document.getElementById("toolchainTaskSelect").value);
-  if(document.getElementById("updateEnvVariables").checked) output.toolchainTasks.push(document.getElementById("updateEnvVariables").getAttribute("output"));
+  if (document.getElementById("liblcfTask").checked) output.liblcfTasks.push(document.getElementById("liblcfTaskSelect").value);
+  if(document.getElementById("liblcfTask").checked) output.liblcfTasks.push("setup_env.cmd");
 
   if (document.getElementById("gitInstall").checked) output.download["winget install"].push("git.git --silent");
   if(document.getElementById("vsComInstall").checked) output.download["winget install"].push(`Microsoft.VisualStudio.2022.Community --silent --override "--wait --passive --addProductLang En-us --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"`);
-  //if( document.getElementById("vsBtInstall").checked) output.download["winget install"].push(`Microsoft.VisualStudio.2022.BuildTools --silent --override "--wait --passive --addProductLang En-us --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"`);
-
-if(document.getElementById("playerRepo").checked) output.download["git clone"].push("-b windows/helper https://github.com/Ghabry/easyrpg-buildscripts.git")
-if(document.getElementById("liblcfRepo").checked) output.download["git clone"].push("https://github.com/EasyRPG/Player.git")
+  
+if(document.getElementById("playerRepo").checked) output.download["git clone"].push("-b " +repos.player.branch + " " + repos.player.url + " " + repos.player.folder)
+if(document.getElementById("buildScriptsRepo").checked) output.download["git clone"].push("-b " +repos.lib.branch + " " + repos.lib.url + " " + repos.lib.folder)
 
   return output;
 

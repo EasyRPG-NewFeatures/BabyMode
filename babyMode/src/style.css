@@ -395,6 +395,46 @@ input:checked, button{
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.8); /* Adjust the alpha value (0.8) to set the opacity */
-  z-index: 9999; /* Make sure the overlay is on top of other elements */
+  z-index: 9998; /* Make sure the overlay is on top of other elements */
   pointer-events: all; /* This will disable all interactions with elements beneath the overlay */
+}
+
+
+#dialog {
+  pointer-events: all; 
+  background-color: var(--c-gray01);
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+  left: 50%;
+  padding: 20px;
+  position: fixed;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+}
+
+#hint, #input { margin-bottom: 10px; }
+
+#input,#inputFolder,#inputBranch {
+  border: 1px solid #ccc;
+  padding: 5px;
+  width: 98%;
+}
+
+button {
+  cursor: pointer;
+  padding: 5px 10px;
+  border: 0;
+}
+#okBtn { background-color: #4caf50; color: #fff; }
+#cancelBtn { background-color: #ccc; color: #000; }
+#resetBtn { background-color: #f44336; color: #fff; }
+
+.thanksArea{
+  text-align: center; 
+  opacity: .2;
+}
+
+.thanksArea:hover{
+  opacity: 1;
 }

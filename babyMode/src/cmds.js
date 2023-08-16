@@ -42,15 +42,15 @@ git clone ${inputs.download["git clone"][1]}
 echo.
 echo.
 
-:: Download toolchain files that has been already built online
-pushd easyrpg-buildscripts\\windows
-${inputs.toolchainTasks[0] ? "echo. | " + inputs.toolchainTasks[0]: "" }
+:: Download liblcf files that has been already built online
+pushd ${repos.lib.folder}\\windows
+${inputs.liblcfTasks[0] ? "echo. | " + inputs.liblcfTasks[0]: "" }
 
 echo.
 echo.
 
 :: setup new environment variables using setx
-${inputs.toolchainTasks[1] ? "echo. | " + inputs.toolchainTasks[1]: "" }
+${inputs.liblcfTasks[1] ? "echo. | " + inputs.liblcfTasks[1]: "" }
 call "%updateEnvVars%"
 echo.
 echo.
@@ -65,25 +65,36 @@ echo "genFinish" Script will build EasyRPG Player as ${inputs.buildSettings.targ
 echo.
 echo.
 
-::pushd ${inputs.buildSettings.folder}
-::pushd Player
+set "projectFilePath=\"%cd%\\EasyRPG_Player_exe.vcxproj.user\"" 
+set "newArguments=--test-play --project-path \"${inputs.postInstall.gamesFolder}\""
 
-@echo off
 
 set "tempScript=%temp%\\build_script_temp.bat"
 (
     echo @echo off
     echo pushd ${inputs.buildSettings.folder}
-    echo pushd Player
+    echo pushd ${repos.player.folder}
     echo cmake --preset ${inputs.buildSettings.target} -DPLAYER_BUILD_LIBLCF=ON
     echo pushd build\\${inputs.buildSettings.target} 
-    echo echo .\\Player\\build\\${inputs.buildSettings.target} is ready
     echo  ${inputs.postInstall.openProject? "start EasyRPG_Player.sln" : ""}
-) > "%tempScript%"
 
+
+) > "%tempScript%"
 echo "%tempScript%"| call "%programData%\\Microsoft\\Windows\\Start Menu\\Programs\\Visual Studio 2022\\Visual Studio Tools\\Developer Command Prompt for VS 2022.lnk"
 
+::powershell -Command "(Get-Content '%projectFilePath%') -replace '(<LocalDebuggerCommandArguments>).*?(</LocalDebuggerCommandArguments>)', '$1%newArguments%$2' | Set-Content '%projectFilePath%'"
 del "%tempScript%"
+echo.
+echo.
+echo --------------------
+echo.
+echo.
+echo Install finished. Close this window PLS.
+
+:loop
+pause >nul
+goto loop
+
 
 `;
 
