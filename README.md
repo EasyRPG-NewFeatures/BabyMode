@@ -1,5 +1,6 @@
 Baby Mode installer for easyRPG Player, uses tauri and prompt cmd.
-<br>Basic Implementation, Files to pay attention are:
+<br> To install easyRPG just download and run `babyMode.exe` from the root of this repo
+<br><br>If you feel like customizing it's source code, Files to pay attention are:
 
 ``` css
 .\babyMode\src\script.js
