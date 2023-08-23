@@ -15,6 +15,14 @@ mkdir EasyRPG
 set "current_dir=%cd%"
 
 :: Installing Apps
+echo.
+echo.
+echo Setting up winget parameters...
+:: The idea here is to install a text-font (Verdana Pro) to avoid that popup from microsoft store terms of service, it usually breaks vs2022 install process.
+echo y | winget.exe install --id 9N8D67VHHDC2 --exact --source msstore --accept-source-agreements --accept-package-agreements --silent --force > nul
+call "%updateEnvVars%"
+echo.
+echo.
 
 ${inputs.buildSettings.overrideFiles ? "": `where git > nul 2>&1
 if %errorlevel% neq 0 (`}
